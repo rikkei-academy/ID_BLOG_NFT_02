@@ -18,6 +18,11 @@ public class UserServiceImp implements UserService {
     }
 
     @Override
+    public Users findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Override
     public boolean existsByUserName(String userName) {
         return userRepository.existsByUserName(userName);
     }
@@ -27,8 +32,14 @@ public class UserServiceImp implements UserService {
         return userRepository.existsByEmail(email);
     }
 
+
     @Override
     public Users saveOrUpdate(Users user) {
         return userRepository.save(user);
+    }
+
+    @Override
+    public Users findByUserId(int users) {
+        return userRepository.findById(users).get();
     }
 }

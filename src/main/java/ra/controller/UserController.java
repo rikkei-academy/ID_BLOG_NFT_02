@@ -1,12 +1,15 @@
 package ra.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import ra.jwt.JwtTokenProvider;
 import ra.model.entity.ERole;
@@ -14,6 +17,7 @@ import ra.model.entity.Roles;
 import ra.model.entity.Users;
 import ra.model.service.RoleService;
 import ra.model.service.UserService;
+import ra.payload.request.ChangePassword;
 import ra.payload.request.LoginRequest;
 import ra.payload.request.SignupRequest;
 import ra.payload.response.JwtResponse;
@@ -22,10 +26,7 @@ import ra.security.CustomUserDetail;
 
 import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*")
@@ -115,6 +116,26 @@ public class UserController {
         SecurityContextHolder.clearContext();
 
         return ResponseEntity.ok("You have been logged out.");
+    }
+
+    @PutMapping("/changePass")
+    public ResponseEntity<?> changePassword(@RequestBody ChangePassword changePass) {
+        CustomUserDetail userDetails = (CustomUserDetail) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Users users = userService.findByUserId(userDetails.getUserId());
+        BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
+        boolean passChecker = bc.matches(changePass.getOldPassword(), users.getPasswords());
+        if (passChecker) {
+            boolean checkDuplicate = bc.matches(changePass.getPassword(), users.getPasswords());
+            if (checkDuplicate) {
+                return ResponseEntity.ok(new MessageResponse("Mật khẩu mới phải khác mật khẩu cũ!"));
+            } else {
+                users.setPasswords(encoder.encode(changePass.getPassword()));
+                userService.saveOrUpdate(users);
+                return ResponseEntity.ok(new MessageResponse("Đổi mật khẩu thành công !"));
+            }
+        } else {
+            return ResponseEntity.ok(new MessageResponse("Mật khẩu không hợp lệ ! Đổi mật khẩu thất bại"));
+        }
     }
 
 
