@@ -3,6 +3,7 @@ package ra.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,6 +16,7 @@ import ra.jwt.JwtTokenProvider;
 import ra.model.entity.ERole;
 import ra.model.entity.Roles;
 import ra.model.entity.Users;
+import ra.model.repository.UserRepository;
 import ra.model.service.RoleService;
 import ra.model.service.UserService;
 import ra.payload.request.ChangePassword;
@@ -43,6 +45,8 @@ public class UserController {
     private RoleService roleService;
     @Autowired
     private PasswordEncoder encoder;
+    @Autowired
+    private UserRepository userRepository;
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody SignupRequest signupRequest) {
         if (userService.existsByUserName(signupRequest.getUserName())) {
@@ -137,6 +141,21 @@ public class UserController {
             return ResponseEntity.ok(new MessageResponse("Mật khẩu không hợp lệ ! Đổi mật khẩu thất bại"));
         }
     }
+
+
+
+
+//    @GetMapping("/getAllUser")
+//    @PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN')")
+//    public List<Users> getAllUser(){
+//        return userService.findAll();
+//    }
+//
+//    @GetMapping("/{userId}")
+//    @PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN')")
+//    public Users getUserById(@PathVariable("userId") int userId){
+//        return userService.findByUserId(userId);
+//    }
 
 
 }

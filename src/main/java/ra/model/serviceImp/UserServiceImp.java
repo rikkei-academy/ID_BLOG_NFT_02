@@ -7,6 +7,8 @@ import ra.model.entity.Users;
 import ra.model.repository.UserRepository;
 import ra.model.service.UserService;
 
+import java.util.List;
+
 @Service
 public class UserServiceImp implements UserService {
     @Autowired
@@ -41,5 +43,10 @@ public class UserServiceImp implements UserService {
     @Override
     public Users findByUserId(int users) {
         return userRepository.findById(users).get();
+    }
+
+    @Override
+    public List<Users> findAll() {
+        return userRepository.findAll();
     }
 }
