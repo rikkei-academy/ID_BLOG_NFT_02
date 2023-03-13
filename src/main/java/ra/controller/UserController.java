@@ -14,12 +14,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import ra.jwt.JwtTokenProvider;
 import ra.model.entity.ERole;
 import ra.model.entity.Roles;
-import ra.model.entity.Users;
+import ra.model.entity.User;
 import ra.model.repository.UserRepository;
 import ra.model.service.RoleService;
 import ra.model.service.UserService;
@@ -39,7 +38,7 @@ import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/v1/user")
 public class UserController {
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -61,20 +60,11 @@ public class UserController {
         if (userService.existsByEmail(signupRequest.getEmail())) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already"));
         }
-        Users user = new Users();
+        User user = new User();
         user.setUserName(signupRequest.getUserName());
-        user.setPasswords(encoder.encode(signupRequest.getPasswords()));
-        user.setEmail(signupRequest.getEmail());
-        user.setPhone(signupRequest.getPhone());
+        user.setUserPassword(encoder.encode(signupRequest.getPassword()));
+        user.setUserEmail(signupRequest.getEmail());
         user.setUserStatus(true);
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        Date dateNow = new Date();
-        String strNow = sdf.format(dateNow);
-        try {
-            user.setCreated(sdf.parse(strNow));
-        }catch (Exception ex){
-            ex.printStackTrace();
-        }
         Set<String> strRoles = signupRequest.getListRoles();
         Set<Roles> listRoles = new HashSet<>();
         if (strRoles==null){
@@ -106,7 +96,7 @@ public class UserController {
     @PostMapping("/signin")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest){
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUserName(),loginRequest.getPasswords())
+                new UsernamePasswordAuthenticationToken(loginRequest.getUserName(),loginRequest.getPassword())
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
         CustomUserDetail customUserDetail = (CustomUserDetail) authentication.getPrincipal();
@@ -115,8 +105,8 @@ public class UserController {
         //Lay cac quyen cua user
         List<String> listRoles = customUserDetail.getAuthorities().stream()
                 .map(item->item.getAuthority()).collect(Collectors.toList());
-        return ResponseEntity.ok(new JwtResponse(jwt,customUserDetail.getUsername(),customUserDetail.getEmail(),
-                customUserDetail.getPhone(),listRoles));
+        return ResponseEntity.ok(new JwtResponse(jwt,customUserDetail.getUsername(),customUserDetail.getEmail()
+                ,listRoles));
     }
     @GetMapping("/logOut")
     public ResponseEntity<?> logOut(HttpServletRequest request){
@@ -131,15 +121,15 @@ public class UserController {
     @PutMapping("/changePass")
     public ResponseEntity<?> changePassword(@RequestBody ChangePassword changePass) {
         CustomUserDetail userDetails = (CustomUserDetail) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Users users = userService.findByUserId(userDetails.getUserId());
+        User users = userService.findByUserId(userDetails.getUserId());
         BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
-        boolean passChecker = bc.matches(changePass.getOldPassword(), users.getPasswords());
+        boolean passChecker = bc.matches(changePass.getOldPassword(), users.getUserPassword());
         if (passChecker) {
-            boolean checkDuplicate = bc.matches(changePass.getPassword(), users.getPasswords());
+            boolean checkDuplicate = bc.matches(changePass.getPassword(), users.getUserPassword());
             if (checkDuplicate) {
                 return ResponseEntity.ok(new MessageResponse("Mật khẩu mới phải khác mật khẩu cũ!"));
             } else {
-                users.setPasswords(encoder.encode(changePass.getPassword()));
+                users.setUserPassword(encoder.encode(changePass.getPassword()));
                 userService.saveOrUpdate(users);
                 return ResponseEntity.ok(new MessageResponse("Đổi mật khẩu thành công !"));
             }
@@ -153,7 +143,7 @@ public class UserController {
     ///////////////////searchId/////////////////////////////
     @GetMapping("/{userId}")
     @PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN')")
-    public Users getUserById(@PathVariable("userId") int userId){
+    public User getUserById(@PathVariable("userId") int userId){
         return userService.findByUserId(userId);
     }
 
@@ -168,15 +158,13 @@ public class UserController {
 
     public List<ListUserResponse> getAllProduct() {
         List<ListUserResponse> listUserResponses = new ArrayList<>();
-        List<Users> listUser = userService.findAll();
-        for (Users use : listUser) {
+        List<User> listUser = userService.findAll();
+        for (User use : listUser) {
             ListUserResponse users = new ListUserResponse();
-            users.setUserId(use.getUserId());
+            users.setUserId(use.getUserID());
             users.setUserName(use.getUserName());
-            users.setCreated(use.getCreated());
-            users.setEmail(use.getEmail());
+            users.setEmail(use.getUserEmail());
             users.setUserAvatar(use.getUserAvatar());
-            users.setPhone(use.getPhone());
             users.setUserStatus(use.isUserStatus());
             listUserResponses.add(users);
         }
@@ -191,7 +179,7 @@ public class UserController {
     /////////////////////////search UserName//////////////////////////
     @GetMapping("/searchUser")
     @PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN')")
-    public List<Users> searchUsersss(@RequestParam("userName") String userName){
+    public List<User> searchUsersss(@RequestParam("userName") String userName){
         return userService.searchUserName(userName);
     }
     //////////////////////////end search UserName////////////////////////
@@ -200,8 +188,8 @@ public class UserController {
 
     /////////////////////////////phan quyen User////////////////////////////////
     @PostMapping("/phanquyen/{userId}")
-    public Users updateUser(@PathVariable("userId") int userId, @RequestBody UpdaUserQuyen updaUserQuyen){
-        Users user = userService.findByUserId(userId);
+    public User updateUser(@PathVariable("userId") int userId, @RequestBody UpdaUserQuyen updaUserQuyen){
+        User user = userService.findByUserId(userId);
         Set<String> strRoles = updaUserQuyen.getListRoles();
         Set<Roles> listRoles = new HashSet<>();
         if(strRoles == null){
@@ -232,8 +220,8 @@ public class UserController {
 
 ////////////////////////sap xep user/////////////////////////////////////////////
     @GetMapping("/sortByName")
-    public ResponseEntity<List<Users>> sortByUserName(@RequestParam("direction") String direction){
-        List<Users> listUser = userService.sortByStudentName(direction);
+    public ResponseEntity<List<User>> sortByUserName(@RequestParam("direction") String direction){
+        List<User> listUser = userService.sortByUserName(direction);
         return new ResponseEntity<>(listUser, HttpStatus.OK);
     }
     ///////////////////////end sapxep user////////////////////////
@@ -247,7 +235,7 @@ public class UserController {
             @RequestParam(defaultValue = "3") int size
     ){
         Pageable pageable = PageRequest.of(page,size);
-        Page<Users> pageUser = userService.pagging(pageable);
+        Page<User> pageUser = userService.pagging(pageable);
         Map<String,Object> data = new HashMap<>();
         data.put("user",pageUser.getContent());
         data.put("total",pageUser.getSize());
@@ -270,7 +258,7 @@ public class UserController {
             order = new Sort.Order(Sort.Direction.DESC,"userName");
         }
         Pageable pageable = PageRequest.of(page, size,Sort.by(order));
-        Page<Users> pageUser = userService.pagging(pageable);
+        Page<User> pageUser = userService.pagging(pageable);
         Map<String,Object> data = new HashMap<>();
         data.put("user",pageUser.getContent());
         data.put("total",pageUser.getSize());
@@ -284,7 +272,7 @@ public class UserController {
 @PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<String> blockUser(@PathVariable("userId") int userId){
         try {
-            Users users = userService.findByUserId(userId);
+            User users = userService.findByUserId(userId);
             users.setUserStatus(false);
             userService.saveOrUpdate(users);
             return ResponseEntity.ok("yes sir bạn đã khóa thành công");
@@ -299,7 +287,7 @@ public class UserController {
     @PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<String> unlockUser(@PathVariable("userId") int userId){
         try {
-            Users users = userService.findByUserId(userId);
+            User users = userService.findByUserId(userId);
             users.setUserStatus(true);
             userService.saveOrUpdate(users);
             return ResponseEntity.ok("Chúc mừng bạn đã mở khoa thành công thành công");
@@ -310,7 +298,7 @@ public class UserController {
     }
 
     @GetMapping("filter/{option}")
-    public List<Users> listFilter(@PathVariable("option") Integer option){
+    public List<User> listFilter(@PathVariable("option") Integer option){
         return userService.listFilter(option);
     }
 

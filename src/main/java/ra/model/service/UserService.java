@@ -2,29 +2,29 @@ package ra.model.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import ra.model.entity.Users;
+import ra.model.entity.User;
 
 import java.util.List;
 
 public interface UserService {
-    List<Users> sortByStudentName(String direction);
-    List<Users> findByUserName(String userName);
-    List<Users> searchUserName(String userName);
+    List<User> sortByUserName(String direction);
+    List<User> findByUserName(String userName);
+    List<User> searchUserName(String userName);
 
-    Users findByEmail(String email);
+    User findByEmail(String email);
 
     boolean existsByUserName(String userName);
 
     boolean existsByEmail(String email);
 
-    Users saveOrUpdate(Users user);
+    User saveOrUpdate(User user);
 
-    Users findByUserId(int users);
+    User findByUserId(int users);
 
-    List<Users> findAll();
-    Page<Users> pagging(Pageable pageable);
-    Users updateStatus(Users users);
+    List<User> findAll();
+    Page<User> pagging(Pageable pageable);
+    User updateStatus(User users);
 
-    List<Users> listFilter(Integer option);
+    List<User> listFilter(Integer option);
 
 }

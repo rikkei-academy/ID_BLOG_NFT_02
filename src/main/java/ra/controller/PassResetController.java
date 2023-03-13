@@ -10,7 +10,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.web.bind.annotation.*;
 import ra.payload.response.MessageResponse;
 import ra.model.entity.PasswordResetToken;
-import ra.model.entity.Users;
+import ra.model.entity.User;
 import ra.model.sendEmail.ProvideSendEmail;
 import ra.model.service.PassResetService;
 import ra.model.service.UserService;
@@ -34,16 +34,20 @@ public class PassResetController {
     @GetMapping("/resetPassword")
     public ResponseEntity<?> resetPassword(@RequestParam("email") String email, HttpServletRequest request) {
         if (userService.existsByEmail(email)) {
-            Users users = (Users) userService.findByEmail(email);
+            User users = (User) userService.findByEmail(email);
+            UserDetails userDetails = customUserDetailsService.loadUserByUsername(users.getUserName());
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             String token = UUID.randomUUID().toString();
             PasswordResetToken myToken = new PasswordResetToken();
-            myToken.setToken( token);
+            myToken.setToken(token);
             String mess= "token is valid for 5 minutes.\n"+"Your token: " +token;
             myToken.setUsers(users);
             Date now = new Date();
             myToken.setStartDate(now);
             passResetService.saveOrUpdate(myToken);
-            provideSendEmail.sendSimpleMessage(users.getEmail(),
+            provideSendEmail.sendSimpleMessage(users.getUserEmail(),
                     "Reset your password", mess);
             return ResponseEntity.ok("Email sent! Please check your email");
         } else {
@@ -60,8 +64,8 @@ public class PassResetController {
             return new ResponseEntity<>(new MessageResponse("Expired Token "), HttpStatus.EXPECTATION_FAILED);
         } else {
             if (passwordResetToken.getToken().equals(token)) {
-                Users users = (Users) userService.findByUserId(userDetails.getUserId());
-                users.setPasswords(encoder.encode(newPassword));
+                User users = (User) userService.findByUserId(userDetails.getUserId());
+                users.setUserPassword(encoder.encode(newPassword));
                 userService.saveOrUpdate(users);
                 return new ResponseEntity<>(new MessageResponse("cập nhật mật khẩu thành công"), HttpStatus.OK);
             } else {

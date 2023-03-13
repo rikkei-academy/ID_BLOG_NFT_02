@@ -11,8 +11,8 @@ public class PasswordResetToken {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
     private String token;
-    @OneToOne(targetEntity = Users.class, fetch = FetchType.EAGER)
-    @JoinColumn(nullable = false, name = "userId")
-    private Users users;
+    @OneToOne(targetEntity = User.class, fetch = FetchType.LAZY)
+    @JoinColumn(nullable = false, name = "userID")
+    private User users;
     private Date startDate;
 }

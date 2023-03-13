@@ -3,15 +3,12 @@ package ra.security;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import ra.model.entity.Users;
+import ra.model.entity.User;
 
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -24,11 +21,10 @@ public class CustomUserDetail implements UserDetails {
     private int userId;
     private String userName;
     @JsonIgnore
-    private String passwords;
-    public Date created;
+    private String password;
     public String email;
     public String userAvatar;
-    public String phone;
+
     public boolean userStatus;
 
 
@@ -43,18 +39,16 @@ public class CustomUserDetail implements UserDetails {
         return this.authorities;
     }
 
-    public static CustomUserDetail mapUserToUserDetail(Users user){
+    public static CustomUserDetail mapUserToUserDetail(User user){
         List<GrantedAuthority> listAuthorities = user.getListRoles().stream()
                 .map(roles -> new SimpleGrantedAuthority(roles.getRoleName().name()))
                 .collect(Collectors.toList());
         return new CustomUserDetail (
-                user.getUserId(),
+                user.getUserID(),
                 user.getUserName(),
-                user.getPasswords(),
-                user.getCreated(),
-                user.getEmail(),
+                user.getUserPassword(),
+                user.getUserEmail(),
                 user.getUserAvatar(),
-                user.getPhone(),
                 user.isUserStatus(),
                 listAuthorities
         );
@@ -62,7 +56,7 @@ public class CustomUserDetail implements UserDetails {
 
     @Override
     public String getPassword() {
-        return this.passwords;
+        return this.password;
     }
 
     @Override

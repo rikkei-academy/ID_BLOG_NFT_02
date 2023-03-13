@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import ra.model.entity.Users;
+import ra.model.entity.User;
 import ra.model.repository.UserRepository;
 import ra.model.service.UserService;
 
@@ -20,7 +20,7 @@ public class UserServiceImp implements UserService {
 
 
     @Override
-    public List<Users> sortByStudentName(String direction) {
+    public List<User> sortByUserName(String direction) {
         if(direction.equals("asc")){
             return userRepository.findAll(Sort.by("userName").ascending());
         }else {
@@ -28,19 +28,21 @@ public class UserServiceImp implements UserService {
         }
     }
 
+
+
     @Override
-    public List<Users> findByUserName(String userName) {
+    public List<User> findByUserName(String userName) {
         return userRepository.findAll();
     }
 
     @Override
-    public List<Users> searchUserName(String userName) {
+    public List<User> searchUserName(String userName) {
         return userRepository.findByUserNameContaining(userName);
     }
 
     @Override
-    public Users findByEmail(String email) {
-        return userRepository.findByEmail(email);
+    public User findByEmail(String email) {
+        return userRepository.findByUserEmail(email);
     }
 
     @Override
@@ -50,40 +52,40 @@ public class UserServiceImp implements UserService {
 
     @Override
     public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
+        return userRepository.existsByUserEmail(email);
     }
 
 
     @Override
-    public Users saveOrUpdate(Users user) {
+    public User saveOrUpdate(User user) {
         return userRepository.save(user);
     }
 
     @Override
-    public Users findByUserId(int users) {
+    public User findByUserId(int users) {
         return userRepository.findById(users).get();
     }
 
     @Override
-    public List<Users> findAll() {
+    public List<User> findAll() {
         return userRepository.findAll();
     }
 
     @Override
-    public Page<Users> pagging(Pageable pageable) {
+    public Page<User> pagging(Pageable pageable) {
         return userRepository.findAll(pageable);
     }
 
     @Override
-    public Users updateStatus(Users users) {
+    public User updateStatus(User users) {
         return userRepository.save(users);
     }
 
     @Override
-    public List<Users> listFilter(Integer option) {
-        List<Users> userList = userRepository.findAll();
-        List<Users> listFilter = new ArrayList<>();
-        for (Users users : userList ) {
+    public List<User> listFilter(Integer option) {
+        List<User> userList = userRepository.findAll();
+        List<User> listFilter = new ArrayList<>();
+        for (User users : userList ) {
             if (users.getListRoles().size()==option){
                 listFilter.add(users);
             }

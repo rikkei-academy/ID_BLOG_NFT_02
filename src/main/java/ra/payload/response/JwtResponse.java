@@ -7,14 +7,13 @@ public class JwtResponse {
     private String type = "Bearer";
     private String userName;
     private String email;
-    private String phone;
+
     private List<String> listRoles;
 
-    public JwtResponse(String token, String userName, String email, String phone, List<String> listRoles) {
+    public JwtResponse(String token, String userName, String email, List<String> listRoles) {
         this.token = token;
         this.userName = userName;
         this.email = email;
-        this.phone = phone;
         this.listRoles = listRoles;
     }
 
@@ -50,13 +49,6 @@ public class JwtResponse {
         this.email = email;
     }
 
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
 
     public List<String> getListRoles() {
         return listRoles;
