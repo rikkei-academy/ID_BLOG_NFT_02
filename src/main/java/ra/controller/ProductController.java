@@ -95,6 +95,7 @@ public class ProductController {
             proNew.setProductImage(product.getProductImage());
             proNew.setProductDescription(product.getProductDecription());
             proNew.setProductCreateDate(new Date());
+            proNew.setProductStatus(true);
             productService.saveOfUpdate(proNew);
             return ResponseEntity.ok("Thêm mới Product thành công😘");
         }catch (Exception e){
